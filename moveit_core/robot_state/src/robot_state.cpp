@@ -1961,6 +1961,7 @@ double RobotState::computeCartesianPath(const JointModelGroup* group, std::vecto
   for (std::size_t i = 1; i <= steps; ++i)
   {
     double percentage = (double)i / (double)steps;
+    ROS_INFO_STREAM_NAMED(LOGNAME, "step " << i << "/" << steps << ". Percentage: " << percentage);
 
     Eigen::Affine3d pose(start_quaternion.slerp(percentage, target_quaternion));
     pose.translation() = percentage * rotated_target.translation() + (1 - percentage) * start_pose.translation();
@@ -1968,9 +1969,15 @@ double RobotState::computeCartesianPath(const JointModelGroup* group, std::vecto
     // Explicitly use a single IK attempt only: We want a smooth trajectory.
     // Random seeding (of additional attempts) would probably create IK jumps.
     if (setFromIK(group, pose, link->getName(), 1, 0.0, validCallback, options))
+    {
+      ROS_INFO_STREAM_NAMED(LOGNAME, "step << " << i << "/" << steps << ". IK found for interpolated pose; added new RobotState to traj");
       traj.push_back(RobotStatePtr(new RobotState(*this)));
+    }
     else
+    {
+      ROS_INFO_STREAM_NAMED(LOGNAME, "step << " << i << "/" << steps << ". No IK found for interpolated pose");
       break;
+    }
 
     last_valid_percentage = percentage;
   }
@@ -1988,6 +1995,7 @@ double RobotState::computeCartesianPath(const JointModelGroup* group, std::vecto
                                         const kinematics::KinematicsQueryOptions& options)
 {
   double percentage_solved = 0.0;
+  ROS_INFO_STREAM_NAMED(LOGNAME, "computeCartesianPath with no_joint_space_jump_test for a path of " << waypoints.size() << " waypoints: ");
   for (std::size_t i = 0; i < waypoints.size(); ++i)
   {
     // Don't test joint space jumps for every waypoint, test them later on the whole trajectory.
@@ -1995,6 +2003,7 @@ double RobotState::computeCartesianPath(const JointModelGroup* group, std::vecto
     std::vector<RobotStatePtr> waypoint_traj;
     double wp_percentage_solved = computeCartesianPath(group, waypoint_traj, link, waypoints[i], global_reference_frame,
                                                        max_step, no_joint_space_jump_test, validCallback, options);
+    ROS_INFO_STREAM_NAMED(LOGNAME, "computeCartesianPath for section " << i << " with no_joint_space_jump_test: " << wp_percentage_solved << "% solved");
     if (fabs(wp_percentage_solved - 1.0) < std::numeric_limits<double>::epsilon())
     {
       percentage_solved = (double)(i + 1) / (double)waypoints.size();
@@ -2014,7 +2023,9 @@ double RobotState::computeCartesianPath(const JointModelGroup* group, std::vecto
     }
   }
 
+  ROS_INFO_STREAM_NAMED(LOGNAME, "computeCartesianPath with no_joint_space_jump_test: now checking testJointSpaceJump");
   percentage_solved *= testJointSpaceJump(group, traj, jump_threshold);
+  ROS_INFO_STREAM_NAMED(LOGNAME, "computeCartesianPath with no_joint_space_jump_test: testJointSpaceJump reports " << percentage_solved << "% solved before test violated");
 
   return percentage_solved;
 }
@@ -2061,7 +2072,7 @@ double RobotState::testRelativeJointSpaceJump(const JointModelGroup* group, std:
   for (std::size_t i = 0; i < dist_vector.size(); ++i)
     if (dist_vector[i] > thres)
     {
-      ROS_DEBUG_NAMED(LOGNAME, "Truncating Cartesian path due to detected jump in joint-space distance");
+      ROS_INFO_NAMED(LOGNAME, "Truncating Cartesian path due to detected jump in joint-space distance");
       percentage = (double)(i + 1) / (double)(traj.size());
       traj.resize(i + 1);
       break;
@@ -2107,7 +2118,7 @@ double RobotState::testAbsoluteJointSpaceJump(const JointModelGroup* group, std:
       double distance = traj[traj_ix]->distance(*traj[traj_ix + 1], joint);
       if (distance > data[type_index].limit)
       {
-        ROS_DEBUG_NAMED(LOGNAME, "Truncating Cartesian path due to detected jump of %.4f > %.4f in joint %s", distance,
+        ROS_INFO_NAMED(LOGNAME, "Truncating Cartesian path due to detected jump of %.4f > %.4f in joint %s", distance,
                         data[type_index].limit, joint->getName().c_str());
         still_valid = false;
         break;
