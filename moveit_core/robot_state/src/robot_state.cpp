@@ -1927,8 +1927,15 @@ double RobotState::computeCartesianPath(const JointModelGroup* group, std::vecto
     return 0.0;
   }
 
+  ROS_INFO_STREAM_NAMED(LOGNAME, "max_step.rotation: " << max_step.rotation << " max_step.translation: " << max_step.translation);
+  ROS_INFO_STREAM_NAMED(LOGNAME, 
+    "jump_threshold.factor: " << jump_threshold.factor << 
+    " jump_threshold.prismatic: " << jump_threshold.prismatic << 
+    " jump_threshold.revolute: " << jump_threshold.revolute);
+
   double rotation_distance = start_quaternion.angularDistance(target_quaternion);
   double translation_distance = (rotated_target.translation() - start_pose.translation()).norm();
+  ROS_INFO_STREAM_NAMED(LOGNAME, "rotation_distance: " << rotation_distance << " translation_distance: " << translation_distance);
 
   // decide how many steps we will need for this trajectory
   std::size_t translation_steps = 0;
@@ -1938,11 +1945,14 @@ double RobotState::computeCartesianPath(const JointModelGroup* group, std::vecto
   std::size_t rotation_steps = 0;
   if (max_step.rotation > 0.0)
     rotation_steps = floor(rotation_distance / max_step.rotation);
+  ROS_INFO_STREAM_NAMED(LOGNAME, "rotation_steps: " << rotation_steps << " translation_steps: " << translation_steps);
 
   // If we are testing for relative jumps, we always want at least MIN_STEPS_FOR_JUMP_THRESH steps
   std::size_t steps = std::max(translation_steps, rotation_steps) + 1;
+  ROS_INFO_STREAM_NAMED(LOGNAME, "steps (before checking MIN_STEPS): " << steps);
   if (jump_threshold.factor > 0 && steps < MIN_STEPS_FOR_JUMP_THRESH)
     steps = MIN_STEPS_FOR_JUMP_THRESH;
+  ROS_INFO_STREAM_NAMED(LOGNAME, "steps (*after checking MIN_STEPS): " << steps);
 
   traj.clear();
   traj.push_back(RobotStatePtr(new RobotState(*this)));
