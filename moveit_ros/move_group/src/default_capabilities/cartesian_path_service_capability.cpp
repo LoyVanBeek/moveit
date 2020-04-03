@@ -65,9 +65,9 @@ bool isStateValid(const planning_scene::PlanningScene* planning_scene,
 {
   state->setJointGroupPositions(group, ik_solution);
   state->update();
-  bool valid = (!planning_scene || !planning_scene->isStateColliding(*state, group->getName())) &&
+  bool valid = (!planning_scene || !planning_scene->isStateColliding(*state, group->getName(), true)) &&
   (!constraint_set || constraint_set->decide(*state).satisfied);
-  ROS_INFO_STREAM("[cpp.isValid] valid: " << valid);
+  ROS_INFO_STREAM("[cpp.isValid] valid: " << valid << ". IK=" << &ik_solution);
   return valid;
 }
 }
