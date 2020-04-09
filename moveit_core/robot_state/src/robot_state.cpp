@@ -1968,14 +1968,18 @@ double RobotState::computeCartesianPath(const JointModelGroup* group, std::vecto
 
     // Explicitly use a single IK attempt only: We want a smooth trajectory.
     // Random seeding (of additional attempts) would probably create IK jumps.
+    if(!isQuaternionNormalized(Eigen::Quaterniond(pose.linear())))
+    {
+      ROS_ERROR_STREAM_NAMED(LOGNAME, "Unnormalized quaternion detected");
+    }
     if (setFromIK(group, pose, link->getName(), 1, 0.0, validCallback, options))
     {
-      ROS_INFO_STREAM_NAMED(LOGNAME, "step << " << i << "/" << steps << ". IK found for interpolated pose; added new RobotState to traj");
+      ROS_INFO_STREAM_NAMED(LOGNAME, "step " << i << "/" << steps << ". IK found for interpolated pose; added new RobotState to traj");
       traj.push_back(RobotStatePtr(new RobotState(*this)));
     }
     else
     {
-      ROS_INFO_STREAM_NAMED(LOGNAME, "step << " << i << "/" << steps << ". No IK found for interpolated pose");
+      ROS_INFO_STREAM_NAMED(LOGNAME, "step " << i << "/" << steps << ". No IK found for interpolated pose");
       break;
     }
 

@@ -45,7 +45,9 @@
 #include <visualization_msgs/MarkerArray.h>
 #include <std_msgs/ColorRGBA.h>
 #include <geometry_msgs/Twist.h>
+#include <geometry_msgs/Quaternion.h>
 #include <cassert>
+#include <math.h>       /* sqrt */
 
 #include <boost/assert.hpp>
 
@@ -138,6 +140,21 @@ public:
   const RobotModelConstPtr& getRobotModel() const
   {
     return robot_model_;
+  }
+
+  /** Check that a quaternion is normalized to within some tolerance. */
+  bool isQuaternionNormalized(const geometry_msgs::Quaternion& quat, double tolerance=0.001)
+  {
+    double norm = sqrt(pow(quat.x, 2) + pow(quat.y, 2) + pow(quat.z, 2) + pow(quat.w, 2));
+    double deviation_from_normal = norm - 1.0f;
+    return (deviation_from_normal <= tolerance);
+  }
+  /** Check that a quaternion is normalized to within some tolerance. */
+  bool isQuaternionNormalized(const Eigen::Quaterniond& quat, double tolerance=0.001)
+  {
+    double norm = quat.norm();
+    double deviation_from_normal = norm - 1.0f;
+    return (deviation_from_normal <= tolerance);
   }
 
   /** \brief Get the number of variables that make up this state. */
