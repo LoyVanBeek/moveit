@@ -1256,6 +1256,22 @@ void KinematicConstraintSet::clear()
   visibility_constraints_.clear();
 }
 
+bool KinematicConstraintSet::add(const std::vector<moveit_msgs::AlignedPositionConstraint>& apc,
+                                 const robot_state::Transforms& tf)
+{
+  bool result = true;
+  for (unsigned int i = 0; i < apc.size(); ++i)
+  {
+    AlignedPositionConstraint* ev = new AlignedPositionConstraint(robot_model_);
+    bool u = ev->configure(apc[i], tf);
+    result = result && u;
+    kinematic_constraints_.push_back(KinematicConstraintPtr(ev));
+    aligned_position_constraints_.push_back(apc[i]);
+    all_constraints_.aligned_position_constraints.push_back(apc[i]);
+  }
+  return result;
+}
+
 bool KinematicConstraintSet::add(const std::vector<moveit_msgs::JointConstraint>& jc)
 {
   bool result = true;
@@ -1271,18 +1287,18 @@ bool KinematicConstraintSet::add(const std::vector<moveit_msgs::JointConstraint>
   return result;
 }
 
-bool KinematicConstraintSet::add(const std::vector<moveit_msgs::PositionConstraint>& apc,
+bool KinematicConstraintSet::add(const std::vector<moveit_msgs::PositionConstraint>& pc,
                                  const robot_state::Transforms& tf)
 {
   bool result = true;
-  for (unsigned int i = 0; i < apc.size(); ++i)
+  for (unsigned int i = 0; i < pc.size(); ++i)
   {
     PositionConstraint* ev = new PositionConstraint(robot_model_);
-    bool u = ev->configure(apc[i], tf);
+    bool u = ev->configure(pc[i], tf);
     result = result && u;
     kinematic_constraints_.push_back(KinematicConstraintPtr(ev));
-    position_constraints_.push_back(apc[i]);
-    all_constraints_.position_constraints.push_back(apc[i]);
+    position_constraints_.push_back(pc[i]);
+    all_constraints_.position_constraints.push_back(pc[i]);
   }
   return result;
 }

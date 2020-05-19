@@ -1065,6 +1065,15 @@ public:
   bool add(const std::vector<moveit_msgs::JointConstraint>& jc);
 
   /**
+   * \brief Add a vector of aligned position constraints
+   *
+   * @param [in] pc A vector of aligned position constraints
+   *
+   * @return Will return true only if all constraints are valid, and false otherwise
+   */
+  bool add(const std::vector<moveit_msgs::AlignedPositionConstraint>& apc, const robot_state::Transforms& tf);
+
+  /**
    * \brief Add a vector of position constraints
    *
    * @param [in] pc A vector of position constraints
@@ -1150,6 +1159,17 @@ public:
   void print(std::ostream& out = std::cout) const;
 
   /**
+   * \brief Get all aligned position constraints in the set
+   *
+   *
+   * @return All aligned position constraints
+   */
+  const std::vector<moveit_msgs::AlignedPositionConstraint>& getAlignedPositionConstraints() const
+  {
+    return aligned_position_constraints_;
+  }
+
+  /**
    * \brief Get all position constraints in the set
    *
    *
@@ -1220,6 +1240,9 @@ protected:
   std::vector<KinematicConstraintPtr>
       kinematic_constraints_; /**<  \brief Shared pointers to all the member constraints */
 
+  std::vector<moveit_msgs::AlignedPositionConstraint> aligned_position_constraints_;       /**<  \brief Messages corresponding to all 
+                                                                                              internal aligned position constraints */
+   
   std::vector<moveit_msgs::JointConstraint> joint_constraints_; /**<  \brief Messages corresponding to all internal
                                                                    joint constraints */
   std::vector<moveit_msgs::PositionConstraint> position_constraints_;       /**<  \brief Messages corresponding to all
