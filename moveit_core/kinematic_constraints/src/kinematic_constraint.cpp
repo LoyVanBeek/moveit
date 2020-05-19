@@ -252,19 +252,18 @@ void AlignedPositionConstraint::print(std::ostream& out) const
 
 void AlignedPositionConstraint::clear()
 {
-  // offset_ = Eigen::Vector3d(0.0, 0.0, 0.0);
-  // has_offset_ = false;
-  // constraint_region_.clear();
-  // constraint_region_pose_.clear();
-  // mobile_frame_ = false;
-  // constraint_frame_id_ = "";
-  // link_model_ = nullptr;
+  offset_ = Eigen::Vector3d(0.0, 0.0, 0.0);
+  has_offset_ = false;
+  constraint_region_.clear();
+  constraint_region_pose_.clear();
+  mobile_frame_ = false;
+  constraint_frame_id_ = "";
+  link_model_ = nullptr;
 }
 
 bool AlignedPositionConstraint::enabled() const
 {
-  // return link_model_ && !constraint_region_.empty();
-  return true;
+  return link_model_ && !constraint_region_.empty();
 }
 
 bool JointConstraint::configure(const moveit_msgs::JointConstraint& jc)
