@@ -93,14 +93,14 @@ bool AlignedPositionConstraint::configure(const moveit_msgs::AlignedPositionCons
   if (link_model_ == nullptr)
   {
     ROS_WARN_NAMED("kinematic_constraints",
-                   "Position constraint link model %s not found in kinematic model. Constraint invalid.",
+                   "Aligned Position constraint link model %s not found in kinematic model. Constraint invalid.",
                    apc.link_name.c_str());
     return false;
   }
 
   if (apc.header.frame_id.empty())
   {
-    ROS_WARN_NAMED("kinematic_constraints", "No frame specified for position constraint on link '%s'!",
+    ROS_WARN_NAMED("kinematic_constraints", "No frame specified for aligned position constraint on link '%s'!",
                    apc.link_name.c_str());
     return false;
   }
@@ -178,7 +178,7 @@ bool AlignedPositionConstraint::configure(const moveit_msgs::AlignedPositionCons
   if (apc.weight <= std::numeric_limits<double>::epsilon())
   {
     ROS_WARN_NAMED("kinematic_constraints",
-                   "The weight on position constraint for link '%s' is near zero.  Setting to 1.0.",
+                   "The weight on aligned position constraint for link '%s' is near zero.  Setting to 1.0.",
                    apc.link_name.c_str());
     constraint_weight_ = 1.0;
   }
