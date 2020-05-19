@@ -65,6 +65,209 @@ KinematicConstraint::KinematicConstraint(const robot_model::RobotModelConstPtr& 
 
 KinematicConstraint::~KinematicConstraint() = default;
 
+bool AlignedPositionConstraint::configure(const moveit_msgs::AlignedPositionConstraint& apc, const robot_state::Transforms& tf)
+{
+  // // clearing before we configure to get rid of any old data
+  // clear();
+
+  // link_model_ = robot_model_->getLinkModel(apc.link_name);
+  // if (link_model_ == nullptr)
+  // {
+  //   ROS_WARN_NAMED("kinematic_constraints",
+  //                  "Position constraint link model %s not found in kinematic model. Constraint invalid.",
+  //                  apc.link_name.c_str());
+  //   return false;
+  // }
+
+  // if (apc.header.frame_id.empty())
+  // {
+  //   ROS_WARN_NAMED("kinematic_constraints", "No frame specified for position constraint on link '%s'!",
+  //                  apc.link_name.c_str());
+  //   return false;
+  // }
+
+  // offset_ = Eigen::Vector3d(apc.target_point_offset.x, apc.target_point_offset.y, apc.target_point_offset.z);
+  // has_offset_ = offset_.squaredNorm() > std::numeric_limits<double>::epsilon();
+
+  // if (tf.isFixedFrame(apc.header.frame_id))
+  // {
+  //   constraint_frame_id_ = tf.getTargetFrame();
+  //   mobile_frame_ = false;
+  // }
+  // else
+  // {
+  //   constraint_frame_id_ = apc.header.frame_id;
+  //   mobile_frame_ = true;
+  // }
+
+  // // load primitive shapes, first clearing any we already have
+  // for (std::size_t i = 0; i < apc.constraint_region.primitives.size(); ++i)
+  // {
+  //   std::unique_ptr<shapes::Shape> shape(shapes::constructShapeFromMsg(apc.constraint_region.primitives[i]));
+  //   if (shape)
+  //   {
+  //     if (apc.constraint_region.primitive_poses.size() <= i)
+  //     {
+  //       ROS_WARN_NAMED("kinematic_constraints", "Constraint region message does not contain enough primitive poses");
+  //       continue;
+  //     }
+  //     constraint_region_.push_back(bodies::BodyPtr(bodies::createBodyFromShape(shape.get())));
+  //     Eigen::Affine3d t;
+  //     tf::poseMsgToEigen(apc.constraint_region.primitive_poses[i], t);
+  //     constraint_region_pose_.push_back(t);
+  //     if (mobile_frame_)
+  //       constraint_region_.back()->setPose(constraint_region_pose_.back());
+  //     else
+  //     {
+  //       tf.transformPose(apc.header.frame_id, constraint_region_pose_.back(), constraint_region_pose_.back());
+  //       constraint_region_.back()->setPose(constraint_region_pose_.back());
+  //     }
+  //   }
+  //   else
+  //     ROS_WARN_NAMED("kinematic_constraints", "Could not construct primitive shape %zu", i);
+  // }
+
+  // // load meshes
+  // for (std::size_t i = 0; i < apc.constraint_region.meshes.size(); ++i)
+  // {
+  //   std::unique_ptr<shapes::Shape> shape(shapes::constructShapeFromMsg(apc.constraint_region.meshes[i]));
+  //   if (shape)
+  //   {
+  //     if (apc.constraint_region.mesh_poses.size() <= i)
+  //     {
+  //       ROS_WARN_NAMED("kinematic_constraints", "Constraint region message does not contain enough primitive poses");
+  //       continue;
+  //     }
+  //     constraint_region_.push_back(bodies::BodyPtr(bodies::createBodyFromShape(shape.get())));
+  //     Eigen::Affine3d t;
+  //     tf::poseMsgToEigen(apc.constraint_region.mesh_poses[i], t);
+  //     constraint_region_pose_.push_back(t);
+  //     if (mobile_frame_)
+  //       constraint_region_.back()->setPose(constraint_region_pose_.back());
+  //     else
+  //     {
+  //       tf.transformPose(apc.header.frame_id, constraint_region_pose_.back(), constraint_region_pose_.back());
+  //       constraint_region_.back()->setPose(constraint_region_pose_.back());
+  //     }
+  //   }
+  //   else
+  //   {
+  //     ROS_WARN_NAMED("kinematic_constraints", "Could not construct mesh shape %zu", i);
+  //   }
+  // }
+
+  // if (apc.weight <= std::numeric_limits<double>::epsilon())
+  // {
+  //   ROS_WARN_NAMED("kinematic_constraints",
+  //                  "The weight on position constraint for link '%s' is near zero.  Setting to 1.0.",
+  //                  apc.link_name.c_str());
+  //   constraint_weight_ = 1.0;
+  // }
+  // else
+  //   constraint_weight_ = apc.weight;
+
+  // return !constraint_region_.empty();
+  return false;
+}
+
+bool AlignedPositionConstraint::equal(const KinematicConstraint& other, double margin) const
+{
+  // if (other.getType() != type_)
+  //   return false;
+  // const PositionConstraint& o = static_cast<const PositionConstraint&>(other);
+
+  // if (link_model_ == o.link_model_ && robot_state::Transforms::sameFrame(constraint_frame_id_, o.constraint_frame_id_))
+  // {
+  //   if ((offset_ - o.offset_).norm() > margin)
+  //     return false;
+  //   std::vector<bool> other_region_matches_this(constraint_region_.size(), false);
+  //   for (std::size_t i = 0; i < constraint_region_.size(); ++i)
+  //   {
+  //     bool some_match = false;
+  //     // need to check against all other regions
+  //     for (std::size_t j = 0; j < o.constraint_region_.size(); ++j)
+  //     {
+  //       Eigen::Affine3d diff = constraint_region_pose_[i].inverse(Eigen::Isometry) * o.constraint_region_pose_[j];
+  //       if (diff.translation().norm() < margin && diff.linear().isIdentity(margin) &&
+  //           constraint_region_[i]->getType() == o.constraint_region_[j]->getType() &&
+  //           fabs(constraint_region_[i]->computeVolume() - o.constraint_region_[j]->computeVolume()) < margin)
+  //       {
+  //         some_match = true;
+  //         // can't break, as need to do matches the other way as well
+  //         other_region_matches_this[j] = true;
+  //       }
+  //     }
+  //     if (!some_match)
+  //       return false;
+  //   }
+  //   for (std::size_t i = 0; i < o.constraint_region_.size(); ++i)
+  //     if (!other_region_matches_this[i])
+  //       return false;
+  //   return true;
+  // }
+  return false;
+}
+
+ConstraintEvaluationResult AlignedPositionConstraint::decide(const robot_state::RobotState& state, bool verbose) const
+{
+  // if (!link_model_ || constraint_region_.empty())
+  //   return ConstraintEvaluationResult(true, 0.0);
+
+  // Eigen::Vector3d pt = state.getGlobalLinkTransform(link_model_) * offset_;
+  // if (mobile_frame_)
+  // {
+  //   for (std::size_t i = 0; i < constraint_region_.size(); ++i)
+  //   {
+  //     Eigen::Affine3d tmp = state.getFrameTransform(constraint_frame_id_) * constraint_region_pose_[i];
+  //     bool result = constraint_region_[i]->cloneAt(tmp)->containsPoint(pt, verbose);
+  //     if (result || (i + 1 == constraint_region_pose_.size()))
+  //       return finishPositionConstraintDecision(pt, tmp.translation(), link_model_->getName(), constraint_weight_,
+  //                                               result, verbose);
+  //     else
+  //       finishPositionConstraintDecision(pt, tmp.translation(), link_model_->getName(), constraint_weight_, result,
+  //                                        verbose);
+  //   }
+  // }
+  // else
+  // {
+  //   for (std::size_t i = 0; i < constraint_region_.size(); ++i)
+  //   {
+  //     bool result = constraint_region_[i]->containsPoint(pt, true);
+  //     if (result || (i + 1 == constraint_region_.size()))
+  //       return finishPositionConstraintDecision(pt, constraint_region_[i]->getPose().translation(),
+  //                                               link_model_->getName(), constraint_weight_, result, verbose);
+  //     else
+  //       finishPositionConstraintDecision(pt, constraint_region_[i]->getPose().translation(), link_model_->getName(),
+  //                                        constraint_weight_, result, verbose);
+  //   }
+  // }
+  return ConstraintEvaluationResult(false, 0.0);
+}
+
+void AlignedPositionConstraint::print(std::ostream& out) const
+{
+  if (enabled())
+    out << "Position constraint on link '" << link_model_->getName() << "'" << std::endl;
+  else
+    out << "No constraint" << std::endl;
+}
+
+void AlignedPositionConstraint::clear()
+{
+  // offset_ = Eigen::Vector3d(0.0, 0.0, 0.0);
+  // has_offset_ = false;
+  // constraint_region_.clear();
+  // constraint_region_pose_.clear();
+  // mobile_frame_ = false;
+  // constraint_frame_id_ = "";
+  // link_model_ = nullptr;
+}
+
+bool AlignedPositionConstraint::enabled() const
+{
+  return true;
+}
+
 bool JointConstraint::configure(const moveit_msgs::JointConstraint& jc)
 {
   // clearing before we configure to get rid of any old data
@@ -269,61 +472,61 @@ void JointConstraint::print(std::ostream& out) const
     out << "No constraint" << std::endl;
 }
 
-bool PositionConstraint::configure(const moveit_msgs::PositionConstraint& pc, const robot_state::Transforms& tf)
+bool PositionConstraint::configure(const moveit_msgs::PositionConstraint& apc, const robot_state::Transforms& tf)
 {
   // clearing before we configure to get rid of any old data
   clear();
 
-  link_model_ = robot_model_->getLinkModel(pc.link_name);
+  link_model_ = robot_model_->getLinkModel(apc.link_name);
   if (link_model_ == nullptr)
   {
     ROS_WARN_NAMED("kinematic_constraints",
                    "Position constraint link model %s not found in kinematic model. Constraint invalid.",
-                   pc.link_name.c_str());
+                   apc.link_name.c_str());
     return false;
   }
 
-  if (pc.header.frame_id.empty())
+  if (apc.header.frame_id.empty())
   {
     ROS_WARN_NAMED("kinematic_constraints", "No frame specified for position constraint on link '%s'!",
-                   pc.link_name.c_str());
+                   apc.link_name.c_str());
     return false;
   }
 
-  offset_ = Eigen::Vector3d(pc.target_point_offset.x, pc.target_point_offset.y, pc.target_point_offset.z);
+  offset_ = Eigen::Vector3d(apc.target_point_offset.x, apc.target_point_offset.y, apc.target_point_offset.z);
   has_offset_ = offset_.squaredNorm() > std::numeric_limits<double>::epsilon();
 
-  if (tf.isFixedFrame(pc.header.frame_id))
+  if (tf.isFixedFrame(apc.header.frame_id))
   {
     constraint_frame_id_ = tf.getTargetFrame();
     mobile_frame_ = false;
   }
   else
   {
-    constraint_frame_id_ = pc.header.frame_id;
+    constraint_frame_id_ = apc.header.frame_id;
     mobile_frame_ = true;
   }
 
   // load primitive shapes, first clearing any we already have
-  for (std::size_t i = 0; i < pc.constraint_region.primitives.size(); ++i)
+  for (std::size_t i = 0; i < apc.constraint_region.primitives.size(); ++i)
   {
-    std::unique_ptr<shapes::Shape> shape(shapes::constructShapeFromMsg(pc.constraint_region.primitives[i]));
+    std::unique_ptr<shapes::Shape> shape(shapes::constructShapeFromMsg(apc.constraint_region.primitives[i]));
     if (shape)
     {
-      if (pc.constraint_region.primitive_poses.size() <= i)
+      if (apc.constraint_region.primitive_poses.size() <= i)
       {
         ROS_WARN_NAMED("kinematic_constraints", "Constraint region message does not contain enough primitive poses");
         continue;
       }
       constraint_region_.push_back(bodies::BodyPtr(bodies::createBodyFromShape(shape.get())));
       Eigen::Affine3d t;
-      tf::poseMsgToEigen(pc.constraint_region.primitive_poses[i], t);
+      tf::poseMsgToEigen(apc.constraint_region.primitive_poses[i], t);
       constraint_region_pose_.push_back(t);
       if (mobile_frame_)
         constraint_region_.back()->setPose(constraint_region_pose_.back());
       else
       {
-        tf.transformPose(pc.header.frame_id, constraint_region_pose_.back(), constraint_region_pose_.back());
+        tf.transformPose(apc.header.frame_id, constraint_region_pose_.back(), constraint_region_pose_.back());
         constraint_region_.back()->setPose(constraint_region_pose_.back());
       }
     }
@@ -332,25 +535,25 @@ bool PositionConstraint::configure(const moveit_msgs::PositionConstraint& pc, co
   }
 
   // load meshes
-  for (std::size_t i = 0; i < pc.constraint_region.meshes.size(); ++i)
+  for (std::size_t i = 0; i < apc.constraint_region.meshes.size(); ++i)
   {
-    std::unique_ptr<shapes::Shape> shape(shapes::constructShapeFromMsg(pc.constraint_region.meshes[i]));
+    std::unique_ptr<shapes::Shape> shape(shapes::constructShapeFromMsg(apc.constraint_region.meshes[i]));
     if (shape)
     {
-      if (pc.constraint_region.mesh_poses.size() <= i)
+      if (apc.constraint_region.mesh_poses.size() <= i)
       {
         ROS_WARN_NAMED("kinematic_constraints", "Constraint region message does not contain enough primitive poses");
         continue;
       }
       constraint_region_.push_back(bodies::BodyPtr(bodies::createBodyFromShape(shape.get())));
       Eigen::Affine3d t;
-      tf::poseMsgToEigen(pc.constraint_region.mesh_poses[i], t);
+      tf::poseMsgToEigen(apc.constraint_region.mesh_poses[i], t);
       constraint_region_pose_.push_back(t);
       if (mobile_frame_)
         constraint_region_.back()->setPose(constraint_region_pose_.back());
       else
       {
-        tf.transformPose(pc.header.frame_id, constraint_region_pose_.back(), constraint_region_pose_.back());
+        tf.transformPose(apc.header.frame_id, constraint_region_pose_.back(), constraint_region_pose_.back());
         constraint_region_.back()->setPose(constraint_region_pose_.back());
       }
     }
@@ -360,15 +563,15 @@ bool PositionConstraint::configure(const moveit_msgs::PositionConstraint& pc, co
     }
   }
 
-  if (pc.weight <= std::numeric_limits<double>::epsilon())
+  if (apc.weight <= std::numeric_limits<double>::epsilon())
   {
     ROS_WARN_NAMED("kinematic_constraints",
                    "The weight on position constraint for link '%s' is near zero.  Setting to 1.0.",
-                   pc.link_name.c_str());
+                   apc.link_name.c_str());
     constraint_weight_ = 1.0;
   }
   else
-    constraint_weight_ = pc.weight;
+    constraint_weight_ = apc.weight;
 
   return !constraint_region_.empty();
 }
@@ -1068,18 +1271,18 @@ bool KinematicConstraintSet::add(const std::vector<moveit_msgs::JointConstraint>
   return result;
 }
 
-bool KinematicConstraintSet::add(const std::vector<moveit_msgs::PositionConstraint>& pc,
+bool KinematicConstraintSet::add(const std::vector<moveit_msgs::PositionConstraint>& apc,
                                  const robot_state::Transforms& tf)
 {
   bool result = true;
-  for (unsigned int i = 0; i < pc.size(); ++i)
+  for (unsigned int i = 0; i < apc.size(); ++i)
   {
     PositionConstraint* ev = new PositionConstraint(robot_model_);
-    bool u = ev->configure(pc[i], tf);
+    bool u = ev->configure(apc[i], tf);
     result = result && u;
     kinematic_constraints_.push_back(KinematicConstraintPtr(ev));
-    position_constraints_.push_back(pc[i]);
-    all_constraints_.position_constraints.push_back(pc[i]);
+    position_constraints_.push_back(apc[i]);
+    all_constraints_.position_constraints.push_back(apc[i]);
   }
   return result;
 }
