@@ -65,6 +65,25 @@ KinematicConstraint::KinematicConstraint(const robot_model::RobotModelConstPtr& 
 
 KinematicConstraint::~KinematicConstraint() = default;
 
+// helper function to avoid code duplication
+static inline ConstraintEvaluationResult finishPositionConstraintDecision(const Eigen::Vector3d& pt,
+                                                                          const Eigen::Vector3d& desired,
+                                                                          const std::string& name, double weight,
+                                                                          bool result, bool verbose)
+{
+  double dx = desired.x() - pt.x();
+  double dy = desired.y() - pt.y();
+  double dz = desired.z() - pt.z();
+  if (verbose)
+  {
+    ROS_INFO_NAMED(
+        "kinematic_constraints", "Position constraint %s on link '%s'. Desired: %f, %f, %f, current: %f, %f, %f",
+        result ? "satisfied" : "violated", name.c_str(), desired.x(), desired.y(), desired.z(), pt.x(), pt.y(), pt.z());
+    ROS_INFO_NAMED("kinematic_constraints", "Differences %g %g %g", dx, dy, dz);
+  }
+  return ConstraintEvaluationResult(result, weight * sqrt(dx * dx + dy * dy + dz * dz));
+}
+
 bool AlignedPositionConstraint::configure(const moveit_msgs::AlignedPositionConstraint& apc, const robot_state::Transforms& tf)
 {
   // clearing before we configure to get rid of any old data
@@ -208,37 +227,37 @@ bool AlignedPositionConstraint::equal(const KinematicConstraint& other, double m
 
 ConstraintEvaluationResult AlignedPositionConstraint::decide(const robot_state::RobotState& state, bool verbose) const
 {
-  // if (!link_model_ || constraint_region_.empty())
-  //   return ConstraintEvaluationResult(true, 0.0);
+  if (!link_model_ || constraint_region_.empty())
+    return ConstraintEvaluationResult(true, 0.0);
 
-  // Eigen::Vector3d pt = state.getGlobalLinkTransform(link_model_) * offset_;
-  // if (mobile_frame_)
-  // {
-  //   for (std::size_t i = 0; i < constraint_region_.size(); ++i)
-  //   {
-  //     Eigen::Affine3d tmp = state.getFrameTransform(constraint_frame_id_) * constraint_region_pose_[i];
-  //     bool result = constraint_region_[i]->cloneAt(tmp)->containsPoint(pt, verbose);
-  //     if (result || (i + 1 == constraint_region_pose_.size()))
-  //       return finishPositionConstraintDecision(pt, tmp.translation(), link_model_->getName(), constraint_weight_,
-  //                                               result, verbose);
-  //     else
-  //       finishPositionConstraintDecision(pt, tmp.translation(), link_model_->getName(), constraint_weight_, result,
-  //                                        verbose);
-  //   }
-  // }
-  // else
-  // {
-  //   for (std::size_t i = 0; i < constraint_region_.size(); ++i)
-  //   {
-  //     bool result = constraint_region_[i]->containsPoint(pt, true);
-  //     if (result || (i + 1 == constraint_region_.size()))
-  //       return finishPositionConstraintDecision(pt, constraint_region_[i]->getPose().translation(),
-  //                                               link_model_->getName(), constraint_weight_, result, verbose);
-  //     else
-  //       finishPositionConstraintDecision(pt, constraint_region_[i]->getPose().translation(), link_model_->getName(),
-  //                                        constraint_weight_, result, verbose);
-  //   }
-  // }
+  Eigen::Vector3d pt = state.getGlobalLinkTransform(link_model_) * offset_;
+  if (mobile_frame_)
+  {
+    for (std::size_t i = 0; i < constraint_region_.size(); ++i)
+    {
+      Eigen::Affine3d tmp = state.getFrameTransform(constraint_frame_id_) * constraint_region_pose_[i];
+      bool result = constraint_region_[i]->cloneAt(tmp)->containsPoint(pt, verbose);
+      if (result || (i + 1 == constraint_region_pose_.size()))
+        return finishPositionConstraintDecision(pt, tmp.translation(), link_model_->getName(), constraint_weight_,
+                                                result, verbose);
+      else
+        finishPositionConstraintDecision(pt, tmp.translation(), link_model_->getName(), constraint_weight_, result,
+                                         verbose);
+    }
+  }
+  else
+  {
+    for (std::size_t i = 0; i < constraint_region_.size(); ++i)
+    {
+      bool result = constraint_region_[i]->containsPoint(pt, true);
+      if (result || (i + 1 == constraint_region_.size()))
+        return finishPositionConstraintDecision(pt, constraint_region_[i]->getPose().translation(),
+                                                link_model_->getName(), constraint_weight_, result, verbose);
+      else
+        finishPositionConstraintDecision(pt, constraint_region_[i]->getPose().translation(), link_model_->getName(),
+                                         constraint_weight_, result, verbose);
+    }
+  }
   return ConstraintEvaluationResult(false, 0.0);
 }
 
@@ -610,25 +629,6 @@ bool PositionConstraint::equal(const KinematicConstraint& other, double margin) 
     return true;
   }
   return false;
-}
-
-// helper function to avoid code duplication
-static inline ConstraintEvaluationResult finishPositionConstraintDecision(const Eigen::Vector3d& pt,
-                                                                          const Eigen::Vector3d& desired,
-                                                                          const std::string& name, double weight,
-                                                                          bool result, bool verbose)
-{
-  double dx = desired.x() - pt.x();
-  double dy = desired.y() - pt.y();
-  double dz = desired.z() - pt.z();
-  if (verbose)
-  {
-    ROS_INFO_NAMED(
-        "kinematic_constraints", "Position constraint %s on link '%s'. Desired: %f, %f, %f, current: %f, %f, %f",
-        result ? "satisfied" : "violated", name.c_str(), desired.x(), desired.y(), desired.z(), pt.x(), pt.y(), pt.z());
-    ROS_INFO_NAMED("kinematic_constraints", "Differences %g %g %g", dx, dy, dz);
-  }
-  return ConstraintEvaluationResult(result, weight * sqrt(dx * dx + dy * dy + dz * dz));
 }
 
 ConstraintEvaluationResult PositionConstraint::decide(const robot_state::RobotState& state, bool verbose) const
