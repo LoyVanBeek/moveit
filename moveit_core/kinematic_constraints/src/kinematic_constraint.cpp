@@ -1335,11 +1335,12 @@ bool KinematicConstraintSet::add(const std::vector<moveit_msgs::VisibilityConstr
 
 bool KinematicConstraintSet::add(const moveit_msgs::Constraints& c, const robot_state::Transforms& tf)
 {
+  bool a = add(c.aligned_position_constraints, tf);
   bool j = add(c.joint_constraints);
   bool p = add(c.position_constraints, tf);
   bool o = add(c.orientation_constraints, tf);
   bool v = add(c.visibility_constraints, tf);
-  return j && p && o && v;
+  return a && j && p && o && v;
 }
 
 ConstraintEvaluationResult KinematicConstraintSet::decide(const robot_state::RobotState& state, bool verbose) const
