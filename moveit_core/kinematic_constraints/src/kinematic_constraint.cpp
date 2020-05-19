@@ -190,39 +190,39 @@ bool AlignedPositionConstraint::configure(const moveit_msgs::AlignedPositionCons
 
 bool AlignedPositionConstraint::equal(const KinematicConstraint& other, double margin) const
 {
-  // if (other.getType() != type_)
-  //   return false;
-  // const PositionConstraint& o = static_cast<const PositionConstraint&>(other);
+  if (other.getType() != type_)
+    return false;
+  const AlignedPositionConstraint& o = static_cast<const AlignedPositionConstraint&>(other);
 
-  // if (link_model_ == o.link_model_ && robot_state::Transforms::sameFrame(constraint_frame_id_, o.constraint_frame_id_))
-  // {
-  //   if ((offset_ - o.offset_).norm() > margin)
-  //     return false;
-  //   std::vector<bool> other_region_matches_this(constraint_region_.size(), false);
-  //   for (std::size_t i = 0; i < constraint_region_.size(); ++i)
-  //   {
-  //     bool some_match = false;
-  //     // need to check against all other regions
-  //     for (std::size_t j = 0; j < o.constraint_region_.size(); ++j)
-  //     {
-  //       Eigen::Affine3d diff = constraint_region_pose_[i].inverse(Eigen::Isometry) * o.constraint_region_pose_[j];
-  //       if (diff.translation().norm() < margin && diff.linear().isIdentity(margin) &&
-  //           constraint_region_[i]->getType() == o.constraint_region_[j]->getType() &&
-  //           fabs(constraint_region_[i]->computeVolume() - o.constraint_region_[j]->computeVolume()) < margin)
-  //       {
-  //         some_match = true;
-  //         // can't break, as need to do matches the other way as well
-  //         other_region_matches_this[j] = true;
-  //       }
-  //     }
-  //     if (!some_match)
-  //       return false;
-  //   }
-  //   for (std::size_t i = 0; i < o.constraint_region_.size(); ++i)
-  //     if (!other_region_matches_this[i])
-  //       return false;
-  //   return true;
-  // }
+  if (link_model_ == o.link_model_ && robot_state::Transforms::sameFrame(constraint_frame_id_, o.constraint_frame_id_))
+  {
+    if ((offset_ - o.offset_).norm() > margin)
+      return false;
+    std::vector<bool> other_region_matches_this(constraint_region_.size(), false);
+    for (std::size_t i = 0; i < constraint_region_.size(); ++i)
+    {
+      bool some_match = false;
+      // need to check against all other regions
+      for (std::size_t j = 0; j < o.constraint_region_.size(); ++j)
+      {
+        Eigen::Affine3d diff = constraint_region_pose_[i].inverse(Eigen::Isometry) * o.constraint_region_pose_[j];
+        if (diff.translation().norm() < margin && diff.linear().isIdentity(margin) &&
+            constraint_region_[i]->getType() == o.constraint_region_[j]->getType() &&
+            fabs(constraint_region_[i]->computeVolume() - o.constraint_region_[j]->computeVolume()) < margin)
+        {
+          some_match = true;
+          // can't break, as need to do matches the other way as well
+          other_region_matches_this[j] = true;
+        }
+      }
+      if (!some_match)
+        return false;
+    }
+    for (std::size_t i = 0; i < o.constraint_region_.size(); ++i)
+      if (!other_region_matches_this[i])
+        return false;
+    return true;
+  }
 }
 
 ConstraintEvaluationResult AlignedPositionConstraint::decide(const robot_state::RobotState& state, bool verbose) const
