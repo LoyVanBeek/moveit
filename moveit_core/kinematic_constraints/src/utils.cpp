@@ -104,6 +104,10 @@ moveit_msgs::Constraints mergeConstraints(const moveit_msgs::Constraints& first,
   for (std::size_t i = 0; i < second.position_constraints.size(); ++i)
     r.position_constraints.push_back(second.position_constraints[i]);
 
+  r.aligned_position_constraints = first.aligned_position_constraints;
+  for (std::size_t i = 0; i < second.aligned_position_constraints.size(); ++i)
+    r.aligned_position_constraints.push_back(second.aligned_position_constraints[i]);
+
   r.orientation_constraints = first.orientation_constraints;
   for (std::size_t i = 0; i < second.orientation_constraints.size(); ++i)
     r.orientation_constraints.push_back(second.orientation_constraints[i]);
@@ -117,13 +121,13 @@ moveit_msgs::Constraints mergeConstraints(const moveit_msgs::Constraints& first,
 
 bool isEmpty(const moveit_msgs::Constraints& constr)
 {
-  return constr.position_constraints.empty() && constr.orientation_constraints.empty() &&
+  return constr.aligned_position_constraints.empty() && constr.position_constraints.empty() && constr.orientation_constraints.empty() &&
          constr.visibility_constraints.empty() && constr.joint_constraints.empty();
 }
 
 std::size_t countIndividualConstraints(const moveit_msgs::Constraints& constr)
 {
-  return constr.position_constraints.size() + constr.orientation_constraints.size() +
+  return constr.aligned_position_constraints.size() + constr.position_constraints.size() + constr.orientation_constraints.size() +
          constr.visibility_constraints.size() + constr.joint_constraints.size();
 }
 
