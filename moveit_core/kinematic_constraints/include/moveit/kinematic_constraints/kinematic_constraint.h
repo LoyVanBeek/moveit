@@ -319,26 +319,12 @@ public:
     return constraint_frame_id_;
   }
 
-  /**
-   * \brief If enabled and the specified frame is a mobile frame,
-   * return true.  Otherwise, returns false.
-   *
-   *
-   * @return Whether a mobile reference frame is being employed
-   */
-  bool mobileReferenceFrame() const
-  {
-    if (!enabled())
-      return false;
-    return mobile_frame_;
-  }
 
 protected:
   Eigen::Vector3d offset_;                         /**< \brief The target offset */
   bool has_offset_;                                /**< \brief Whether the offset is substantially different than 0.0 */
   std::vector<bodies::BodyPtr> constraint_region_; /**< \brief The constraint region vector */
   EigenSTL::vector_Affine3d constraint_region_pose_; /**< \brief The constraint region pose vector */
-  bool mobile_frame_;                                /**< \brief Whether or not a mobile frame is employed*/
   std::string constraint_frame_id_;                  /**< \brief The constraint frame id */
   const robot_model::LinkModel* link_model_;         /**< \brief The link model constraint subject */
   std::string take_orientation_of_frame_id_;         /**< \brief The orientation is based on the transform between constraint_frame_id and this*/

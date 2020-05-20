@@ -113,16 +113,7 @@ bool AlignedPositionConstraint::configure(const moveit_msgs::AlignedPositionCons
   rot_y_ = apc.rot_y;
   rot_z_ = apc.rot_z;
 
-  if (tf.isFixedFrame(apc.header.frame_id))
-  {
-    constraint_frame_id_ = tf.getTargetFrame();
-    mobile_frame_ = false;
-  }
-  else
-  {
-    constraint_frame_id_ = apc.header.frame_id;
-    mobile_frame_ = true;
-  }
+  constraint_frame_id_ = apc.header.frame_id;
 
   // load primitive shapes, first clearing any we already have
   for (std::size_t i = 0; i < apc.constraint_region.primitives.size(); ++i)
@@ -139,13 +130,8 @@ bool AlignedPositionConstraint::configure(const moveit_msgs::AlignedPositionCons
       Eigen::Affine3d t;
       tf::poseMsgToEigen(apc.constraint_region.primitive_poses[i], t);
       constraint_region_pose_.push_back(t);
-      if (mobile_frame_)
-        constraint_region_.back()->setPose(constraint_region_pose_.back());
-      else
-      {
-        tf.transformPose(apc.header.frame_id, constraint_region_pose_.back(), constraint_region_pose_.back());
-        constraint_region_.back()->setPose(constraint_region_pose_.back());
-      }
+      
+      constraint_region_.back()->setPose(constraint_region_pose_.back());
     }
     else
       ROS_WARN_NAMED("kinematic_constraints", "Could not construct primitive shape %zu", i);
@@ -166,13 +152,7 @@ bool AlignedPositionConstraint::configure(const moveit_msgs::AlignedPositionCons
       Eigen::Affine3d t;
       tf::poseMsgToEigen(apc.constraint_region.mesh_poses[i], t);
       constraint_region_pose_.push_back(t);
-      if (mobile_frame_)
-        constraint_region_.back()->setPose(constraint_region_pose_.back());
-      else
-      {
-        tf.transformPose(apc.header.frame_id, constraint_region_pose_.back(), constraint_region_pose_.back());
-        constraint_region_.back()->setPose(constraint_region_pose_.back());
-      }
+      constraint_region_.back()->setPose(constraint_region_pose_.back());
     }
     else
     {
@@ -236,33 +216,18 @@ ConstraintEvaluationResult AlignedPositionConstraint::decide(const robot_state::
     return ConstraintEvaluationResult(true, 0.0);
 
   Eigen::Vector3d pt = state.getGlobalLinkTransform(link_model_) * offset_;
-  if (mobile_frame_)
+  for (std::size_t i = 0; i < constraint_region_.size(); ++i)
   {
-    for (std::size_t i = 0; i < constraint_region_.size(); ++i)
-    {
-      Eigen::Affine3d tmp = state.getFrameTransform(constraint_frame_id_) * constraint_region_pose_[i];
-      bool result = constraint_region_[i]->cloneAt(tmp)->containsPoint(pt, verbose);
-      if (result || (i + 1 == constraint_region_pose_.size()))
-        return finishPositionConstraintDecision(pt, tmp.translation(), link_model_->getName(), constraint_weight_,
-                                                result, verbose);
-      else
-        finishPositionConstraintDecision(pt, tmp.translation(), link_model_->getName(), constraint_weight_, result,
-                                         verbose);
-    }
+    Eigen::Affine3d tmp = state.getFrameTransform(constraint_frame_id_) * constraint_region_pose_[i];
+    bool result = constraint_region_[i]->cloneAt(tmp)->containsPoint(pt, verbose);
+    if (result || (i + 1 == constraint_region_pose_.size()))
+      return finishPositionConstraintDecision(pt, tmp.translation(), link_model_->getName(), constraint_weight_,
+                                              result, verbose);
+    else
+      finishPositionConstraintDecision(pt, tmp.translation(), link_model_->getName(), constraint_weight_, result,
+                                        verbose);
   }
-  else
-  {
-    for (std::size_t i = 0; i < constraint_region_.size(); ++i)
-    {
-      bool result = constraint_region_[i]->containsPoint(pt, true);
-      if (result || (i + 1 == constraint_region_.size()))
-        return finishPositionConstraintDecision(pt, constraint_region_[i]->getPose().translation(),
-                                                link_model_->getName(), constraint_weight_, result, verbose);
-      else
-        finishPositionConstraintDecision(pt, constraint_region_[i]->getPose().translation(), link_model_->getName(),
-                                         constraint_weight_, result, verbose);
-    }
-  }
+  
   return ConstraintEvaluationResult(false, 0.0);
 }
 
@@ -280,7 +245,6 @@ void AlignedPositionConstraint::clear()
   has_offset_ = false;
   constraint_region_.clear();
   constraint_region_pose_.clear();
-  mobile_frame_ = false;
   constraint_frame_id_ = "";
   link_model_ = nullptr;
 }
