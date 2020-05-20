@@ -179,6 +179,12 @@ bool AlignedPositionConstraint::equal(const KinematicConstraint& other, double m
     return false;
   const AlignedPositionConstraint& o = static_cast<const AlignedPositionConstraint&>(other);
 
+  if(!robot_state::Transforms::sameFrame(take_orientation_of_frame_id_, o.take_orientation_of_frame_id_))
+    return false;
+
+  if(rot_x_ != o.rot_x_ || rot_y_ != o.rot_y_ || rot_z_ != o.rot_z_)
+    return false;
+
   if (link_model_ == o.link_model_ && robot_state::Transforms::sameFrame(constraint_frame_id_, o.constraint_frame_id_))
   {
     if ((offset_ - o.offset_).norm() > margin)
