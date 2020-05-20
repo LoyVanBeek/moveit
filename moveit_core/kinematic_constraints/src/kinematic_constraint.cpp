@@ -108,6 +108,11 @@ bool AlignedPositionConstraint::configure(const moveit_msgs::AlignedPositionCons
   offset_ = Eigen::Vector3d(apc.target_point_offset.x, apc.target_point_offset.y, apc.target_point_offset.z);
   has_offset_ = offset_.squaredNorm() > std::numeric_limits<double>::epsilon();
 
+  take_orientation_of_frame_id_ = apc.take_orientation_of;
+  rot_x_ = apc.rot_x;
+  rot_y_ = apc.rot_y;
+  rot_z_ = apc.rot_z;
+
   if (tf.isFixedFrame(apc.header.frame_id))
   {
     constraint_frame_id_ = tf.getTargetFrame();
