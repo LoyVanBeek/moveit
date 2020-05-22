@@ -224,22 +224,30 @@ ConstraintEvaluationResult AlignedPositionConstraint::decide(const robot_state::
   Eigen::Vector3d pt = state.getGlobalLinkTransform(link_model_) * offset_;
   ROS_INFO_STREAM("pt: " << std::endl << pt);
 
-  Eigen::Affine3d take_orientation_of_frame = state.getFrameTransform(take_orientation_of_frame_id_);
+  Eigen::Affine3d take_orientation_of_frame = state.getGlobalLinkTransform(take_orientation_of_frame_id_);  //TODO: rename param to'link' then too
   // 0,1,2 corresponds to XYZ, the convention used in sampling constraints
   Eigen::Vector3d rot_xyz = take_orientation_of_frame.linear().eulerAngles(0, 1, 2);
   ROS_INFO_STREAM("rot_xyz: " << std::endl << rot_xyz);
-  Eigen::Matrix3d pos_xyz = take_orientation_of_frame.linear();
+  Eigen::Vector3d pos_xyz = take_orientation_of_frame.translation();
   ROS_INFO_STREAM("pos_xyz: " << std::endl << pos_xyz);
 
-  Eigen::Matrix3d m;
-  m = Eigen::AngleAxisd((int)rot_x_*rot_xyz(0)*M_PI, Eigen::Vector3d::UnitX())
-    * Eigen::AngleAxisd((int)rot_y_*rot_xyz(1)*M_PI, Eigen::Vector3d::UnitY())
-    * Eigen::AngleAxisd((int)rot_z_*rot_xyz(2)*M_PI, Eigen::Vector3d::UnitZ());
-  ROS_INFO_STREAM("M: " << std::endl << m);
+  ROS_INFO_STREAM("rot_x: " << rot_x_ << 
+                  ", rot_y: " << rot_y_ << 
+                  ", rot_z: " << rot_z_);
+  ROS_INFO_STREAM(  "rot_x: " << (int)rot_x_*(double)rot_xyz(0) << 
+                  ", rot_y: " << (int)rot_y_*(double)rot_xyz(1) << 
+                  ", rot_z: " << (int)rot_z_*(double)rot_xyz(2));
+
+  Eigen::Affine3d aligned_orientation;
+  aligned_orientation = 
+      Eigen::AngleAxisd((int)rot_x_*(double)rot_xyz(0), Eigen::Vector3d::UnitX())
+    * Eigen::AngleAxisd((int)rot_y_*(double)rot_xyz(1), Eigen::Vector3d::UnitY())
+    * Eigen::AngleAxisd((int)rot_z_*(double)rot_xyz(2), Eigen::Vector3d::UnitZ());
+  ROS_INFO_STREAM("aligned_orientation: " << std::endl << aligned_orientation.linear().eulerAngles(0, 1, 2));
   
   Eigen::Affine3d aligned;
-  aligned = take_orientation_of_frame.linear() * m;
-  ROS_INFO_STREAM("take_orientation_of_frame.linear(): " << take_orientation_of_frame.linear());
+  aligned = Eigen::Translation3d(pos_xyz) * aligned_orientation;
+  ROS_INFO_STREAM("take_orientation_of_frame.translation(): " << take_orientation_of_frame.translation());
   
   for (std::size_t i = 0; i < constraint_region_.size(); ++i)
   {
