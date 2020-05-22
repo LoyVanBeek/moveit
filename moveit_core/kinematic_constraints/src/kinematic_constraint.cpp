@@ -222,20 +222,25 @@ ConstraintEvaluationResult AlignedPositionConstraint::decide(const robot_state::
     return ConstraintEvaluationResult(true, 0.0);
 
   Eigen::Vector3d pt = state.getGlobalLinkTransform(link_model_) * offset_;
+  ROS_INFO_STREAM("pt: " << std::endl << pt);
 
   Eigen::Affine3d take_orientation_of_frame = state.getFrameTransform(take_orientation_of_frame_id_);
   // 0,1,2 corresponds to XYZ, the convention used in sampling constraints
-  Eigen::Vector3d xyz = take_orientation_of_frame.linear().eulerAngles(0, 1, 2);
-  ROS_INFO_STREAM("xyz: " << xyz);
+  Eigen::Vector3d rot_xyz = take_orientation_of_frame.linear().eulerAngles(0, 1, 2);
+  ROS_INFO_STREAM("rot_xyz: " << std::endl << rot_xyz);
+  Eigen::Matrix3d pos_xyz = take_orientation_of_frame.linear();
+  ROS_INFO_STREAM("pos_xyz: " << std::endl << pos_xyz);
+
   Eigen::Matrix3d m;
-  m = Eigen::AngleAxisd((int)rot_x_*xyz(0)*M_PI, Eigen::Vector3d::UnitX())
-    * Eigen::AngleAxisd((int)rot_y_*xyz(1)*M_PI, Eigen::Vector3d::UnitY())
-    * Eigen::AngleAxisd((int)rot_z_*xyz(2)*M_PI, Eigen::Vector3d::UnitZ());
-  ROS_INFO_STREAM("M: " << m);
+  m = Eigen::AngleAxisd((int)rot_x_*rot_xyz(0)*M_PI, Eigen::Vector3d::UnitX())
+    * Eigen::AngleAxisd((int)rot_y_*rot_xyz(1)*M_PI, Eigen::Vector3d::UnitY())
+    * Eigen::AngleAxisd((int)rot_z_*rot_xyz(2)*M_PI, Eigen::Vector3d::UnitZ());
+  ROS_INFO_STREAM("M: " << std::endl << m);
   
   Eigen::Affine3d aligned;
   aligned = take_orientation_of_frame.linear() * m;
-
+  ROS_INFO_STREAM("take_orientation_of_frame.linear(): " << take_orientation_of_frame.linear());
+  
   for (std::size_t i = 0; i < constraint_region_.size(); ++i)
   {
     Eigen::Affine3d tmp = aligned * constraint_region_pose_[i];
