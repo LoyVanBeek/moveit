@@ -252,7 +252,11 @@ ConstraintEvaluationResult AlignedPositionConstraint::decide(const robot_state::
   for (std::size_t i = 0; i < constraint_region_.size(); ++i)
   {
     Eigen::Affine3d tmp = aligned * constraint_region_pose_[i];
+    ROS_INFO_STREAM("constraint_region_pose_[" << i << "].translation(): " << constraint_region_pose_[i].translation());
+    ROS_INFO_STREAM("tmp.translation(): " << tmp.translation());
+    ROS_INFO_STREAM("constraint_region_[" << i << "]->computeVolume(): " << constraint_region_[i]->computeVolume());
     bool result = constraint_region_[i]->cloneAt(tmp)->containsPoint(pt, verbose);
+    ROS_INFO_STREAM("constraint_region_[" << i << "]->...->contains(pt): " << result);
     if (result || (i + 1 == constraint_region_pose_.size()))
       return finishPositionConstraintDecision(pt, tmp.translation(), link_model_->getName(), constraint_weight_,
                                               result, verbose);
