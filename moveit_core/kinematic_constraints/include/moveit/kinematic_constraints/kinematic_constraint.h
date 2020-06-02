@@ -1060,7 +1060,7 @@ public:
   /**
    * \brief Add a vector of aligned position constraints
    *
-   * @param [in] pc A vector of aligned position constraints
+   * @param [in] apc A vector of aligned position constraints
    *
    * @return Will return true only if all constraints are valid, and false otherwise
    */

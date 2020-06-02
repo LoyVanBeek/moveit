@@ -84,8 +84,7 @@ static inline ConstraintEvaluationResult finishPositionConstraintDecision(const 
   return ConstraintEvaluationResult(result, weight * sqrt(dx * dx + dy * dy + dz * dz));
 }
 
-bool AlignedPositionConstraint::configure(const moveit_msgs::AlignedPositionConstraint& apc,
-                                          const robot_state::Transforms& tf)
+bool AlignedPositionConstraint::configure(const moveit_msgs::AlignedPositionConstraint& apc, const robot_state::Transforms& tf)
 {
   // clearing before we configure to get rid of any old data
   clear();
@@ -131,7 +130,7 @@ bool AlignedPositionConstraint::configure(const moveit_msgs::AlignedPositionCons
       Eigen::Affine3d t;
       tf::poseMsgToEigen(apc.constraint_region.primitive_poses[i], t);
       constraint_region_pose_.push_back(t);
-
+      
       constraint_region_.back()->setPose(constraint_region_pose_.back());
     }
     else
@@ -180,10 +179,10 @@ bool AlignedPositionConstraint::equal(const KinematicConstraint& other, double m
     return false;
   const AlignedPositionConstraint& o = static_cast<const AlignedPositionConstraint&>(other);
 
-  if (!robot_state::Transforms::sameFrame(take_orientation_of_frame_id_, o.take_orientation_of_frame_id_))
+  if(!robot_state::Transforms::sameFrame(take_orientation_of_frame_id_, o.take_orientation_of_frame_id_))
     return false;
 
-  if (rot_x_ != o.rot_x_ || rot_y_ != o.rot_y_ || rot_z_ != o.rot_z_)
+  if(rot_x_ != o.rot_x_ || rot_y_ != o.rot_y_ || rot_z_ != o.rot_z_)
     return false;
 
   if (link_model_ == o.link_model_ && robot_state::Transforms::sameFrame(constraint_frame_id_, o.constraint_frame_id_))
@@ -223,54 +222,53 @@ ConstraintEvaluationResult AlignedPositionConstraint::decide(const robot_state::
     return ConstraintEvaluationResult(true, 0.0);
 
   Eigen::Vector3d pt = state.getGlobalLinkTransform(link_model_) * offset_;
-  ROS_INFO_STREAM("pt: " << std::endl << pt);
+  ROS_DEBUG_STREAM_NAMED("kinematic_constraints", "pt: " << std::endl << pt);
 
-  Eigen::Affine3d take_orientation_of_frame =
-      state.getGlobalLinkTransform(take_orientation_of_frame_id_);  // TODO: rename param to'link' then too
+  Eigen::Affine3d take_orientation_of_frame = state.getGlobalLinkTransform(take_orientation_of_frame_id_);  //TODO: rename param to'link' then too
   // 0,1,2 corresponds to XYZ, the convention used in sampling constraints
   Eigen::Vector3d rot_xyz = take_orientation_of_frame.linear().eulerAngles(0, 1, 2);
-  ROS_INFO_STREAM("rot_xyz: " << std::endl << rot_xyz);
+  ROS_DEBUG_STREAM_NAMED("kinematic_constraints", "rot_xyz: " << std::endl << rot_xyz);
   Eigen::Vector3d pos_xyz = take_orientation_of_frame.translation();
-  ROS_INFO_STREAM("pos_xyz: " << std::endl << pos_xyz);
+  ROS_DEBUG_STREAM_NAMED("kinematic_constraints", "pos_xyz: " << std::endl << pos_xyz);
 
-  ROS_INFO_STREAM("rot_x: " << rot_x_ << ", rot_y: " << rot_y_ << ", rot_z: " << rot_z_);
-  ROS_INFO_STREAM("rot_x: " << (int)rot_x_ * (double)rot_xyz(0) << ", rot_y: " << (int)rot_y_ * (double)rot_xyz(1)
-                            << ", rot_z: " << (int)rot_z_ * (double)rot_xyz(2));
+  ROS_DEBUG_STREAM_NAMED("kinematic_constraints",
+                  "rot_x: " << rot_x_ << 
+                  ", rot_y: " << rot_y_ << 
+                  ", rot_z: " << rot_z_);
+  ROS_DEBUG_STREAM_NAMED("kinematic_constraints",
+                  "rot_x: " << (int)rot_x_*(double)rot_xyz(0) << 
+                  ", rot_y: " << (int)rot_y_*(double)rot_xyz(1) << 
+                  ", rot_z: " << (int)rot_z_*(double)rot_xyz(2));
 
   Eigen::Affine3d aligned_orientation;
-  aligned_orientation = Eigen::AngleAxisd((int)rot_x_ * (double)rot_xyz(0), Eigen::Vector3d::UnitX()) *
-                        Eigen::AngleAxisd((int)rot_y_ * (double)rot_xyz(1), Eigen::Vector3d::UnitY()) *
-                        Eigen::AngleAxisd((int)rot_z_ * (double)rot_xyz(2), Eigen::Vector3d::UnitZ());
-  ROS_INFO_STREAM("aligned_orientation: " << std::endl << aligned_orientation.linear().eulerAngles(0, 1, 2));
-
+  aligned_orientation = 
+      Eigen::AngleAxisd((int)rot_x_*(double)rot_xyz(0), Eigen::Vector3d::UnitX())
+    * Eigen::AngleAxisd((int)rot_y_*(double)rot_xyz(1), Eigen::Vector3d::UnitY())
+    * Eigen::AngleAxisd((int)rot_z_*(double)rot_xyz(2), Eigen::Vector3d::UnitZ());
+  ROS_DEBUG_STREAM_NAMED("kinematic_constraints", "aligned_orientation: " << std::endl << aligned_orientation.linear().eulerAngles(0, 1, 2));
+  
   Eigen::Affine3d aligned;
   aligned = Eigen::Translation3d(pos_xyz) * aligned_orientation;
-  ROS_INFO_STREAM("take_orientation_of_frame.translation(): " << take_orientation_of_frame.translation());
-
+  ROS_DEBUG_STREAM_NAMED("kinematic_constraints", "take_orientation_of_frame.translation(): " << take_orientation_of_frame.translation());
+  
   for (std::size_t i = 0; i < constraint_region_.size(); ++i)
   {
     Eigen::Affine3d tmp = aligned * constraint_region_pose_[i];
     Eigen::Matrix3d rot = tmp.rotation();
     Eigen::Quaterniond quat(rot);
-    ROS_INFO_STREAM("constraint_region_pose_[" << i << "].translation(): " << std::endl
-                                               << constraint_region_pose_[i].translation());
-    ROS_INFO_STREAM("tmp.translation(): " << std::endl << tmp.translation());
-    ROS_INFO_STREAM("tmp quaternion(): " << std::endl
-                                         << quat.x() << std::endl
-                                         << quat.y() << std::endl
-                                         << quat.z() << std::endl
-                                         << quat.w());
-    ROS_INFO_STREAM("constraint_region_[" << i << "]->computeVolume(): " << constraint_region_[i]->computeVolume());
+    ROS_DEBUG_STREAM_NAMED("kinematic_constraints", "constraint_region_pose_[" << i << "].translation(): " << std::endl << constraint_region_pose_[i].translation());
+    ROS_DEBUG_STREAM_NAMED("kinematic_constraints", "tmp.translation(): " << std::endl << tmp.translation());
+    ROS_DEBUG_STREAM_NAMED("kinematic_constraints", "tmp quaternion(): " << std::endl << quat.x() << std::endl << quat.y() << std::endl << quat.z() << std::endl << quat.w());
     bool result = constraint_region_[i]->cloneAt(tmp)->containsPoint(pt, verbose);
-    ROS_INFO_STREAM("constraint_region_[" << i << "]->...->contains(pt): " << result);
+    ROS_DEBUG_STREAM_NAMED("kinematic_constraints", "constraint_region_[" << i << "]->->cloneAt(tmp)->contains(pt): " << result);
     if (result || (i + 1 == constraint_region_pose_.size()))
-      return finishPositionConstraintDecision(pt, tmp.translation(), link_model_->getName(), constraint_weight_, result,
-                                              verbose);
+      return finishPositionConstraintDecision(pt, tmp.translation(), link_model_->getName(), constraint_weight_,
+                                              result, verbose);
     else
       finishPositionConstraintDecision(pt, tmp.translation(), link_model_->getName(), constraint_weight_, result,
-                                       verbose);
+                                        verbose);
   }
-
+  
   return ConstraintEvaluationResult(false, 0.0);
 }
 
