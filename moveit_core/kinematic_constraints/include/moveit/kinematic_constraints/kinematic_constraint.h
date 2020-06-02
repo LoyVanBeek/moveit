@@ -188,7 +188,7 @@ MOVEIT_CLASS_FORWARD(AlignedPositionConstraint);
  * This class expresses X,Y,Z position constraints of a link.  The
  * position area is specified as a bounding volume consisting of one
  * or more shapes - either solid primitives or meshes. The pose
- * information in the volumes will be interpreted by using the frame 
+ * information in the volumes will be interpreted by using the frame
  * referred to in the header information and an orientation derived from
  * another frame, thus aligning the volume with another link.
  * The header may either specify a fixed frame or a
@@ -208,7 +208,8 @@ public:
    *
    * @param [in] model The kinematic model used for constraint evaluation
    */
-  AlignedPositionConstraint(const robot_model::RobotModelConstPtr& model) : KinematicConstraint(model), link_model_(NULL)
+  AlignedPositionConstraint(const robot_model::RobotModelConstPtr& model)
+    : KinematicConstraint(model), link_model_(NULL)
   {
     type_ = ALIGNED_POSITION_CONSTRAINT;
   }
@@ -319,7 +320,6 @@ public:
     return constraint_frame_id_;
   }
 
-
 protected:
   Eigen::Vector3d offset_;                         /**< \brief The target offset */
   bool has_offset_;                                /**< \brief Whether the offset is substantially different than 0.0 */
@@ -327,10 +327,11 @@ protected:
   EigenSTL::vector_Affine3d constraint_region_pose_; /**< \brief The constraint region pose vector */
   std::string constraint_frame_id_;                  /**< \brief The constraint frame id */
   const robot_model::LinkModel* link_model_;         /**< \brief The link model constraint subject */
-  std::string take_orientation_of_frame_id_;         /**< \brief The orientation is based on the transform between constraint_frame_id and this*/
-  bool rot_x_;                                       /**< \brief use the x rotation or roll of the `take_orientation_frame_from_frame_id_` transform */
-  bool rot_y_;                                       /**< \brief use the y rotation or pitch of the `take_orientation_frame_from_frame_id_` transform */
-  bool rot_z_;                                       /**< \brief use the z rotation or yaw of the `take_orientation_frame_from_frame_id_` transform */
+  std::string take_orientation_of_frame_id_;         /**< \brief The orientation is based on the transform between
+                                                        constraint_frame_id and this*/
+  bool rot_x_; /**< \brief use the x rotation or roll of the `take_orientation_frame_from_frame_id_` transform */
+  bool rot_y_; /**< \brief use the y rotation or pitch of the `take_orientation_frame_from_frame_id_` transform */
+  bool rot_z_; /**< \brief use the z rotation or yaw of the `take_orientation_frame_from_frame_id_` transform */
 };
 
 MOVEIT_CLASS_FORWARD(JointConstraint);
@@ -1232,9 +1233,11 @@ protected:
   std::vector<KinematicConstraintPtr>
       kinematic_constraints_; /**<  \brief Shared pointers to all the member constraints */
 
-  std::vector<moveit_msgs::AlignedPositionConstraint> aligned_position_constraints_;       /**<  \brief Messages corresponding to all 
-                                                                                              internal aligned position constraints */
-   
+  std::vector<moveit_msgs::AlignedPositionConstraint> aligned_position_constraints_; /**<  \brief Messages corresponding
+                                                                                        to all
+                                                                                        internal aligned position
+                                                                                        constraints */
+
   std::vector<moveit_msgs::JointConstraint> joint_constraints_; /**<  \brief Messages corresponding to all internal
                                                                    joint constraints */
   std::vector<moveit_msgs::PositionConstraint> position_constraints_;       /**<  \brief Messages corresponding to all
